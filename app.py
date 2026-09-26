@@ -89,7 +89,7 @@ with col2:
     st.metric("TMNP (por mil)", f"{tmnp:.1f}")
 with col3:
     st.metric("Proporção de Pré-Natal Inadequado", f"{pct_inadequado:.1f}%")
-    st.caption("Baseado apenas em registros válidos (sem ignorados).")
+    st.caption("Baseado apenas em registros válidos.")
 with col4:
     if b * c != 0 and a > 0:
         or_val = (a * d) / (b * c)
@@ -104,14 +104,14 @@ with col4:
     else:
         st.metric("Odds Ratio", "Dados Insuficientes")
 
+# CORREÇÃO MOBILE 1: DataFrame nativo no lugar de Markdown para rolagem lateral
 with st.expander("📊 Ver Matriz de Contingência (Dados absolutos utilizados no modelo)"):
-    st.markdown(f"""
-    | Condição do Pré-Natal | Óbito Precoce (Casos) | Sobrevida (Casos) | Total |
-    | :--- | :--- | :--- | :--- |
-    | **Inadequado (0 a 3)** | {a:,} | {b:,} | **{a+b:,}** |
-    | **Adequado (>= 4)** | {c:,} | {d:,} | **{c+d:,}** |
-    | **Total** | **{a+c:,}** | **{b+d:,}** | **{a+b+c+d:,}** |
-    """.replace(',', '.'))
+    df_matriz = pd.DataFrame({
+        "Óbito Precoce (Casos)": [a, c, a+c],
+        "Sobrevida (Casos)": [b, d, b+d],
+        "Total": [a+b, c+d, a+b+c+d]
+    }, index=["Inadequado (0 a 3)", "Adequado (>= 4)", "Total"])
+    st.dataframe(df_matriz, use_container_width=True)
 
 st.markdown("---")
 
@@ -119,7 +119,7 @@ st.markdown("---")
 # 5. BLOCO: Evolução Temporal (2021-2025)
 # ==========================================
 st.subheader("Evolução Histórica (2021-2025)")
-st.caption("Tendência da Taxa de Mortalidade cruzada com a evolução da proporção de pré-natal inadequado. (Ignora o filtro de Ano, mas obedece ao filtro de Peso).")
+st.caption("Tendência da Taxa de Mortalidade cruzada com a evolução da proporção de pré-natal inadequado.")
 
 df_tendencia = df_mestre.copy()
 if peso_selecionado != "Todas as Faixas":
@@ -135,23 +135,23 @@ df_pre_grp['Pct_Inadequado'] = (df_pre_grp['Inadequado (0 a 3)'] / (df_pre_grp['
 df_hist = pd.merge(df_ano, df_pre_grp[['ANO_NASCIMENTO', 'Pct_Inadequado']], on='ANO_NASCIMENTO', how='left')
 
 fig_hist = go.Figure()
-fig_hist.add_trace(go.Bar(x=df_hist['ANO_NASCIMENTO'].astype(str), y=df_hist['Pct_Inadequado'], name='% Pré-Natal Inadequado', marker_color='#F4C145', opacity=0.8))
-# Aqui a linha foi corrigida para 'red' exatamente como no gráfico do Paradoxo
-fig_hist.add_trace(go.Scatter(x=df_hist['ANO_NASCIMENTO'].astype(str), y=df_hist['TMNP'], name='TMNP (por mil)', yaxis='y2', mode='lines+markers', line=dict(color='red', width=3)))
+fig_hist.add_trace(go.Bar(x=df_hist['ANO_NASCIMENTO'].astype(str), y=df_hist['Pct_Inadequado'], name='% Inadequado', marker_color='#F4C145', opacity=0.8))
+fig_hist.add_trace(go.Scatter(x=df_hist['ANO_NASCIMENTO'].astype(str), y=df_hist['TMNP'], name='TMNP', yaxis='y2', mode='lines+markers', line=dict(color='red', width=3)))
 
 fig_hist.update_layout(
-    yaxis=dict(title='% Pré-Natal Inadequado'),
-    yaxis2=dict(title='Taxa de Mortalidade (por mil)', overlaying='y', side='right'),
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    yaxis=dict(title='% Inadequado'),
+    yaxis2=dict(title='TMNP (por mil)', overlaying='y', side='right'),
+    legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5), # Legenda movida para baixo para não amassar no celular
+    margin=dict(l=10, r=10, t=30, b=10)
 )
 st.plotly_chart(fig_hist, use_container_width=True)
 st.markdown("---")
 
 # ==========================================
-# 6. BLOCO CENTRAL 1: O Paradoxo (Largura Total)
+# 6. BLOCO CENTRAL 1: O Paradoxo
 # ==========================================
 st.subheader("O Paradoxo da Sobrevida e Cobertura Pré-Natal")
-st.caption("Volume de nascimentos segmentado por qualidade do pré-natal, cruzado com o risco de mortalidade (TMNP).")
+st.caption("Volume de nascimentos segmentado por qualidade do pré-natal, cruzado com o risco de mortalidade.")
 
 df_tmnp = df_filtrado[df_filtrado['Faixa_Peso'] != "Não Informado"].groupby('Faixa_Peso').agg(Nascimentos=('OBITO_PRECOCE', 'count'), Obitos=('OBITO_PRECOCE', 'sum')).reset_index()
 df_tmnp['TMNP'] = (df_tmnp['Obitos'] / df_tmnp['Nascimentos']) * 1000
@@ -164,14 +164,14 @@ for status in ["Adequado (>= 4)", "Inadequado (0 a 3)", "Ignorado"]:
     df_temp = df_peso_prenatal[df_peso_prenatal['Status_PreNatal'] == status]
     fig1.add_trace(go.Bar(x=df_temp['Faixa_Peso'], y=df_temp['Contagem'], name=status, marker_color=cores_prenatal[status]))
 
-# A linha vermelha de referência
 fig1.add_trace(go.Scatter(x=df_tmnp['Faixa_Peso'], y=df_tmnp['TMNP'], name='TMNP (Risco)', yaxis='y2', mode='lines+markers', line=dict(color='red', width=3)))
 
 fig1.update_layout(
     barmode='stack',
-    yaxis=dict(title='Volume de Nascimentos'),
-    yaxis2=dict(title='Taxa de Mortalidade (por mil)', overlaying='y', side='right'),
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    yaxis=dict(title='Volume'),
+    yaxis2=dict(title='TMNP', overlaying='y', side='right'),
+    legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5), # Legenda ajustada
+    margin=dict(l=10, r=10, t=30, b=10)
 )
 st.plotly_chart(fig1, use_container_width=True)
 st.markdown("---")
@@ -196,7 +196,9 @@ def plotar_barras_percentuais(df_filtrado_alvo, titulo, y_title=""):
         xaxis_title="", 
         yaxis=dict(range=[0, 100]),
         uniformtext_minsize=12,
-        uniformtext_mode='show' 
+        uniformtext_mode='show',
+        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5), # Legenda ajustada
+        margin=dict(l=10, r=10, t=40, b=10)
     )
     
     fig.update_traces(
@@ -211,11 +213,11 @@ def plotar_barras_percentuais(df_filtrado_alvo, titulo, y_title=""):
     return fig
 
 with col_obitos:
-    fig_obitos = plotar_barras_percentuais(df_filtrado[df_filtrado['OBITO_PRECOCE'] == 1], "Vítimas Fatais (Óbitos)", "% de Casos")
+    fig_obitos = plotar_barras_percentuais(df_filtrado[df_filtrado['OBITO_PRECOCE'] == 1], "Vítimas Fatais", "% de Casos")
     st.plotly_chart(fig_obitos, use_container_width=True)
 
 with col_vivos:
-    fig_vivos = plotar_barras_percentuais(df_filtrado[df_filtrado['OBITO_PRECOCE'] == 0], "Sobreviventes (Vivos)")
+    fig_vivos = plotar_barras_percentuais(df_filtrado[df_filtrado['OBITO_PRECOCE'] == 0], "Sobreviventes")
     st.plotly_chart(fig_vivos, use_container_width=True)
 st.markdown("---")
 
@@ -230,6 +232,8 @@ df_cid['CAUSABAS'] = df_cid['CAUSABAS'].fillna('Não Informada')
 df_cid['LINHAA'] = df_cid['LINHAA'].fillna('Sem Linha A')
 df_cid['LINHAB'] = df_cid['LINHAB'].fillna('Sem Linha B')
 
-fig3 = px.sunburst(df_cid, path=['CAUSABAS', 'LINHAA', 'LINHAB'], color='CAUSABAS', width=800, height=600)
+# CORREÇÃO MOBILE 2: Remoção do bloqueio de largura (width=800) para responsividade total
+fig3 = px.sunburst(df_cid, path=['CAUSABAS', 'LINHAA', 'LINHAB'], color='CAUSABAS')
 fig3.update_traces(textinfo="label+percent parent")
+fig3.update_layout(height=500, margin=dict(t=10, l=10, r=10, b=10)) # Apenas altura definida, largura flexível
 st.plotly_chart(fig3, use_container_width=True)
