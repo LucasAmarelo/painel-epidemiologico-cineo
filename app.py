@@ -140,12 +140,12 @@ fig_hist.add_trace(go.Scatter(x=df_hist['ANO_NASCIMENTO'].astype(str), y=df_hist
 fig_hist.update_layout(
     yaxis=dict(title='% Inadequado'),
     yaxis2=dict(title='TMNP (por mil)', overlaying='y', side='right'),
-    # Legenda movida para o topo e centralizada, título removido
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
+    legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5),
     legend_title_text="",
-    margin=dict(l=10, r=10, t=50, b=10)
+    margin=dict(l=10, r=10, t=60, b=10)
 )
-st.plotly_chart(fig_hist, use_container_width=True)
+# Desativa a HUD (displayModeBar: False) para limpar a tela no celular
+st.plotly_chart(fig_hist, use_container_width=True, config={'displayModeBar': False})
 st.markdown("---")
 
 # ==========================================
@@ -171,12 +171,11 @@ fig1.update_layout(
     barmode='stack',
     yaxis=dict(title='Volume'),
     yaxis2=dict(title='TMNP', overlaying='y', side='right'),
-    # Legenda movida para o topo
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
+    legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5),
     legend_title_text="",
-    margin=dict(l=10, r=10, t=50, b=10)
+    margin=dict(l=10, r=10, t=60, b=10)
 )
-st.plotly_chart(fig1, use_container_width=True)
+st.plotly_chart(fig1, use_container_width=True, config={'displayModeBar': False})
 st.markdown("---")
 
 # ==========================================
@@ -184,15 +183,14 @@ st.markdown("---")
 # ==========================================
 col_obitos, col_vivos = st.columns(2)
 
-def plotar_barras_percentuais(df_filtrado_alvo, titulo, y_title=""):
+def plotar_barras_percentuais(df_filtrado_alvo, y_title=""):
     df_base = df_filtrado_alvo[(df_filtrado_alvo['Faixa_Peso'] != "Não Informado") & (df_filtrado_alvo['Status_PreNatal'] != "Ignorado")]
     agrupado = df_base.groupby(['Faixa_Peso', 'Status_PreNatal']).size().reset_index(name='Contagem')
     totais_por_peso = agrupado.groupby('Faixa_Peso')['Contagem'].transform('sum')
     agrupado['Percentual'] = (agrupado['Contagem'] / totais_por_peso) * 100
     
     fig = px.bar(agrupado, x='Faixa_Peso', y='Percentual', color='Status_PreNatal', 
-                 color_discrete_map={"Inadequado (0 a 3)": "#E45756", "Adequado (>= 4)": "#4C78A8"},
-                 title=titulo)
+                 color_discrete_map={"Inadequado (0 a 3)": "#E45756", "Adequado (>= 4)": "#4C78A8"})
                  
     fig.update_layout(
         yaxis_title=y_title, 
@@ -200,10 +198,9 @@ def plotar_barras_percentuais(df_filtrado_alvo, titulo, y_title=""):
         yaxis=dict(range=[0, 100]),
         uniformtext_minsize=12,
         uniformtext_mode='show',
-        # Legenda movida para o topo e título removido para limpar o visual
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
         legend_title_text="",
-        margin=dict(l=10, r=10, t=50, b=10)
+        margin=dict(l=10, r=10, t=50, b=10) # Espaço garantido apenas para a legenda
     )
     
     fig.update_traces(
@@ -214,16 +211,19 @@ def plotar_barras_percentuais(df_filtrado_alvo, titulo, y_title=""):
         textangle=0, 
         constraintext='none' 
     )
-    
     return fig
 
 with col_obitos:
-    fig_obitos = plotar_barras_percentuais(df_filtrado[df_filtrado['OBITO_PRECOCE'] == 1], "Vítimas Fatais", "% de Casos")
-    st.plotly_chart(fig_obitos, use_container_width=True)
+    # Título desenhado pelo HTML/Streamlit, não pelo Plotly
+    st.markdown("<h5 style='text-align: center;'>Vítimas Fatais (Óbitos)</h5>", unsafe_allow_html=True)
+    fig_obitos = plotar_barras_percentuais(df_filtrado[df_filtrado['OBITO_PRECOCE'] == 1], "% de Casos")
+    st.plotly_chart(fig_obitos, use_container_width=True, config={'displayModeBar': False})
 
 with col_vivos:
-    fig_vivos = plotar_barras_percentuais(df_filtrado[df_filtrado['OBITO_PRECOCE'] == 0], "Sobreviventes")
-    st.plotly_chart(fig_vivos, use_container_width=True)
+    st.markdown("<h5 style='text-align: center;'>Sobreviventes (Vivos)</h5>", unsafe_allow_html=True)
+    fig_vivos = plotar_barras_percentuais(df_filtrado[df_filtrado['OBITO_PRECOCE'] == 0], "")
+    st.plotly_chart(fig_vivos, use_container_width=True, config={'displayModeBar': False})
+
 st.markdown("---")
 
 # ==========================================
@@ -240,4 +240,5 @@ df_cid['LINHAB'] = df_cid['LINHAB'].fillna('Sem Linha B')
 fig3 = px.sunburst(df_cid, path=['CAUSABAS', 'LINHAA', 'LINHAB'], color='CAUSABAS')
 fig3.update_traces(textinfo="label+percent parent")
 fig3.update_layout(height=500, margin=dict(t=10, l=10, r=10, b=10))
-st.plotly_chart(fig3, use_container_width=True)
+# Desativa HUD aqui também
+st.plotly_chart(fig3, use_container_width=True, config={'displayModeBar': False})
