@@ -104,7 +104,6 @@ with col4:
     else:
         st.metric("Odds Ratio", "Dados Insuficientes")
 
-# CORREÇÃO MOBILE 1: DataFrame nativo no lugar de Markdown para rolagem lateral
 with st.expander("📊 Ver Matriz de Contingência (Dados absolutos utilizados no modelo)"):
     df_matriz = pd.DataFrame({
         "Óbito Precoce (Casos)": [a, c, a+c],
@@ -141,8 +140,10 @@ fig_hist.add_trace(go.Scatter(x=df_hist['ANO_NASCIMENTO'].astype(str), y=df_hist
 fig_hist.update_layout(
     yaxis=dict(title='% Inadequado'),
     yaxis2=dict(title='TMNP (por mil)', overlaying='y', side='right'),
-    legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5), # Legenda movida para baixo para não amassar no celular
-    margin=dict(l=10, r=10, t=30, b=10)
+    # Legenda movida para o topo e centralizada, título removido
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
+    legend_title_text="",
+    margin=dict(l=10, r=10, t=50, b=10)
 )
 st.plotly_chart(fig_hist, use_container_width=True)
 st.markdown("---")
@@ -170,8 +171,10 @@ fig1.update_layout(
     barmode='stack',
     yaxis=dict(title='Volume'),
     yaxis2=dict(title='TMNP', overlaying='y', side='right'),
-    legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5), # Legenda ajustada
-    margin=dict(l=10, r=10, t=30, b=10)
+    # Legenda movida para o topo
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
+    legend_title_text="",
+    margin=dict(l=10, r=10, t=50, b=10)
 )
 st.plotly_chart(fig1, use_container_width=True)
 st.markdown("---")
@@ -197,8 +200,10 @@ def plotar_barras_percentuais(df_filtrado_alvo, titulo, y_title=""):
         yaxis=dict(range=[0, 100]),
         uniformtext_minsize=12,
         uniformtext_mode='show',
-        legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5), # Legenda ajustada
-        margin=dict(l=10, r=10, t=40, b=10)
+        # Legenda movida para o topo e título removido para limpar o visual
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
+        legend_title_text="",
+        margin=dict(l=10, r=10, t=50, b=10)
     )
     
     fig.update_traces(
@@ -232,8 +237,7 @@ df_cid['CAUSABAS'] = df_cid['CAUSABAS'].fillna('Não Informada')
 df_cid['LINHAA'] = df_cid['LINHAA'].fillna('Sem Linha A')
 df_cid['LINHAB'] = df_cid['LINHAB'].fillna('Sem Linha B')
 
-# CORREÇÃO MOBILE 2: Remoção do bloqueio de largura (width=800) para responsividade total
 fig3 = px.sunburst(df_cid, path=['CAUSABAS', 'LINHAA', 'LINHAB'], color='CAUSABAS')
 fig3.update_traces(textinfo="label+percent parent")
-fig3.update_layout(height=500, margin=dict(t=10, l=10, r=10, b=10)) # Apenas altura definida, largura flexível
+fig3.update_layout(height=500, margin=dict(t=10, l=10, r=10, b=10))
 st.plotly_chart(fig3, use_container_width=True)
