@@ -250,7 +250,15 @@ dicionario_cid = {
     "A500": "Sífilis congénita precoce sintomática",
     "A509": "Sífilis congénita, não especificada",
     "P012": "Feto/RN afetado por oligoidrâmnio",
-    "P285": "Falência respiratória do recém-nascido"
+    "P285": "Falência respiratória do recém-nascido",
+    # === NOVOS ADICIONADOS ===
+    "P000": "Feto e recém-nascido afetados por transtornos maternos hipertensivos",
+    "P001": "Feto e recém-nascido afetados por doenças maternas renais e das vias urinárias",
+    "P010": "Feto e recém-nascido afetados por incompetência do colo uterino",
+    "P011": "Feto e recém-nascido afetados por ruptura prematura das membranas",
+    "P021": "Feto e recém-nascido afetados por outras formas de descolamento da placenta e hemorragia",
+    "P027": "Feto e recém-nascido afetados por corioamnionite",
+    "Q913": "Síndrome de Edwards não especificada"
 }
 
 df_cid = df_filtrado[(df_filtrado['OBITO_PRECOCE'] == 1) & (df_filtrado['CAUSABAS'].notna())].copy()
