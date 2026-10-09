@@ -259,5 +259,4 @@ df_cid['CAUSABAS'] = df_cid['CAUSABAS'].fillna('Não Informada')
 top10_causas = df_cid['CAUSABAS'].value_counts().reset_index().head(10)
 top10_causas.columns = ['Causa Básica', 'Óbitos']
 
-# Mapeia os códigos usando o dicionário
-top1
+
