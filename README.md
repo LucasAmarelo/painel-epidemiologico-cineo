@@ -1,6 +1,6 @@
 # Painel Epidemiológico - CINEO 📊
 
-Dashboard interativo desenvolvido para análise epidemiológica da associação entre a assistência pré-natal e a mortalidade neonatal precoce, utilizando dados unificados do SIM e SINASC (DATASUS). 
+Dashboard interativo desenvolvido para análise epidemiológica da associação entre a assistência pré-natal e a mortalidade neonatal precoce no Distrito Fedeeral do Brasil, de 2021 até 2025, utilizando dados unificados do SIM e SINASC (DATASUS). 
 
 Projeto desenvolvido para apresentação no **CINEO**.
 
