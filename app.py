@@ -51,7 +51,8 @@ lista_anos = ["Todos os Anos"] + sorted(df_mestre['ANO_NASCIMENTO'].dropna().ast
 ano_selecionado = st.sidebar.selectbox("Ano de Nascimento:", lista_anos)
 
 lista_pesos = ["Todas as Faixas"] + sorted(df_mestre['Faixa_Peso'].unique().tolist())
-lista_pesos.remove("Não Informado") if "Não Informado" in lista_pesos else None
+if "Não Informado" in lista_pesos:
+    lista_pesos.remove("Não Informado")
 peso_selecionado = st.sidebar.selectbox("Faixa de Peso:", lista_pesos)
 
 # Filtro Principal
@@ -89,7 +90,7 @@ with col2:
     st.metric("TMNP (por mil)", f"{tmnp:.1f}")
 with col3:
     st.metric("Proporção de Pré-Natal Inadequado", f"{pct_inadequado:.1f}%")
-    st.caption("Baseado apenas em registros válidos.")
+    st.caption("Baseado apenas em registos válidos.")
 with col4:
     if b * c != 0 and a > 0:
         or_val = (a * d) / (b * c)
@@ -228,7 +229,7 @@ st.markdown("---")
 # 8. BLOCO INFERIOR 1: Top 10 Causas Básicas
 # ==========================================
 st.subheader("Principais Causas de Mortalidade Neonatal")
-st.caption("As 10 Causas Básicas (CID-10) mais frequentes nos óbitos registrados.")
+st.caption("As 10 Causas Básicas (CID-10) mais frequentes nos óbitos registados.")
 
 # Dicionário interno para as causas neonatais mais comuns
 dicionario_cid = {
@@ -245,9 +246,9 @@ dicionario_cid = {
     "P368": "Outras sepses bacterianas do recém-nascido",
     "P362": "Sepse do recém-nascido devida a Staphylococcus aureus",
     "P240": "Aspiração neonatal de mecônio",
-    "Q249": "Malformação congênita do coração, não especificada",
-    "A500": "Sífilis congênita precoce sintomática",
-    "A509": "Sífilis congênita, não especificada",
+    "Q249": "Malformação congénita do coração, não especificada",
+    "A500": "Sífilis congénita precoce sintomática",
+    "A509": "Sífilis congénita, não especificada",
     "P012": "Feto/RN afetado por oligoidrâmnio",
     "P285": "Falência respiratória do recém-nascido"
 }
@@ -259,4 +260,46 @@ df_cid['CAUSABAS'] = df_cid['CAUSABAS'].fillna('Não Informada')
 top10_causas = df_cid['CAUSABAS'].value_counts().reset_index().head(10)
 top10_causas.columns = ['Causa Básica', 'Óbitos']
 
+# Mapeia os códigos usando o dicionário
+top10_causas['Descrição'] = top10_causas['Causa Básica'].map(dicionario_cid).fillna("Descrição não mapeada (Adicione ao código)")
 
+# Inverte a ordem para o maior valor ficar no topo do gráfico
+top10_causas = top10_causas.sort_values(by='Óbitos', ascending=True)
+
+# Gráfico com Hover (Dica de ferramenta flutuante) mostrando a descrição
+fig_top10 = px.bar(top10_causas, x='Óbitos', y='Causa Básica', orientation='h', text='Óbitos',
+                   color_discrete_sequence=['#E45756'],
+                   hover_data={'Descrição': True, 'Óbitos': True, 'Causa Básica': False})
+
+fig_top10.update_layout(
+    xaxis_title="Número de Óbitos",
+    yaxis_title="",
+    margin=dict(l=10, r=30, t=10, b=10),
+    height=450,
+    uniformtext_minsize=12,
+    uniformtext_mode='show'
+)
+fig_top10.update_traces(textposition='outside', textfont_size=14)
+
+st.plotly_chart(fig_top10, use_container_width=True, config={'displayModeBar': False})
+
+# Tabela/Legenda expansível
+with st.expander("📖 Ver Legenda das Doenças (Top 10)"):
+    st.dataframe(top10_causas[['Causa Básica', 'Descrição', 'Óbitos']].sort_values(by='Óbitos', ascending=False), use_container_width=True)
+
+st.markdown("---")
+
+# ==========================================
+# 9. BLOCO INFERIOR 2: Cascata Fisiopatológica
+# ==========================================
+st.subheader("Cadeia Fisiopatológica de Morte (Exploração Profunda)")
+st.caption("Para análises detalhadas: Clique nas fatias do centro (Causa Básica) para expandir as causas intermediárias e terminais.")
+
+df_cid['LINHAA'] = df_cid['LINHAA'].fillna('Sem Linha A')
+df_cid['LINHAB'] = df_cid['LINHAB'].fillna('Sem Linha B')
+
+fig3 = px.sunburst(df_cid, path=['CAUSABAS', 'LINHAA', 'LINHAB'], color='CAUSABAS')
+fig3.update_traces(textinfo="label+percent parent")
+fig3.update_layout(height=500, margin=dict(t=10, l=10, r=10, b=10))
+
+st.plotly_chart(fig3, use_container_width=True, config={'displayModeBar': False})
