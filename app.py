@@ -144,7 +144,6 @@ fig_hist.update_layout(
     legend_title_text="",
     margin=dict(l=10, r=10, t=60, b=10)
 )
-# Desativa a HUD (displayModeBar: False) para limpar a tela no celular
 st.plotly_chart(fig_hist, use_container_width=True, config={'displayModeBar': False})
 st.markdown("---")
 
@@ -200,7 +199,7 @@ def plotar_barras_percentuais(df_filtrado_alvo, y_title=""):
         uniformtext_mode='show',
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
         legend_title_text="",
-        margin=dict(l=10, r=10, t=50, b=10) # Espaço garantido apenas para a legenda
+        margin=dict(l=10, r=10, t=50, b=10)
     )
     
     fig.update_traces(
@@ -214,7 +213,6 @@ def plotar_barras_percentuais(df_filtrado_alvo, y_title=""):
     return fig
 
 with col_obitos:
-    # Título desenhado pelo HTML/Streamlit, não pelo Plotly
     st.markdown("<h5 style='text-align: center;'>Vítimas Fatais (Óbitos)</h5>", unsafe_allow_html=True)
     fig_obitos = plotar_barras_percentuais(df_filtrado[df_filtrado['OBITO_PRECOCE'] == 1], "% de Casos")
     st.plotly_chart(fig_obitos, use_container_width=True, config={'displayModeBar': False})
@@ -227,18 +225,47 @@ with col_vivos:
 st.markdown("---")
 
 # ==========================================
-# 8. BLOCO INFERIOR (Cascata Fisiopatológica)
+# 8. BLOCO INFERIOR 1: Top 10 Causas Básicas (NOVO)
 # ==========================================
-st.subheader("Cadeia Fisiopatológica de Morte (Múltiplas Causas - Óbitos)")
-st.caption("Clique nas fatias do centro (Causa Básica) para expandir as causas intermediárias e terminais.")
+st.subheader("Principais Causas de Mortalidade Neonatal")
+st.caption("As 10 Causas Básicas (CID-10) mais frequentes nos óbitos registrados.")
 
 df_cid = df_filtrado[(df_filtrado['OBITO_PRECOCE'] == 1) & (df_filtrado['CAUSABAS'].notna())].copy()
 df_cid['CAUSABAS'] = df_cid['CAUSABAS'].fillna('Não Informada')
+
+# Agrupa, conta e pega os 10 maiores
+top10_causas = df_cid['CAUSABAS'].value_counts().reset_index().head(10)
+top10_causas.columns = ['Causa Básica', 'Óbitos']
+# Inverte a ordem para o maior valor ficar no topo do gráfico horizontal
+top10_causas = top10_causas.sort_values(by='Óbitos', ascending=True)
+
+fig_top10 = px.bar(top10_causas, x='Óbitos', y='Causa Básica', orientation='h', text='Óbitos',
+                   color_discrete_sequence=['#E45756'])
+
+fig_top10.update_layout(
+    xaxis_title="Número de Óbitos",
+    yaxis_title="",
+    margin=dict(l=10, r=30, t=10, b=10),
+    height=450,
+    uniformtext_minsize=12,
+    uniformtext_mode='show'
+)
+fig_top10.update_traces(textposition='outside', textfont_size=14)
+
+st.plotly_chart(fig_top10, use_container_width=True, config={'displayModeBar': False})
+st.markdown("---")
+
+# ==========================================
+# 9. BLOCO INFERIOR 2: Cascata Fisiopatológica (Movido para o fim)
+# ==========================================
+st.subheader("Cadeia Fisiopatológica de Morte (Exploração Profunda)")
+st.caption("Para análises detalhadas: Clique nas fatias do centro (Causa Básica) para expandir as causas intermediárias e terminais.")
+
 df_cid['LINHAA'] = df_cid['LINHAA'].fillna('Sem Linha A')
 df_cid['LINHAB'] = df_cid['LINHAB'].fillna('Sem Linha B')
 
 fig3 = px.sunburst(df_cid, path=['CAUSABAS', 'LINHAA', 'LINHAB'], color='CAUSABAS')
 fig3.update_traces(textinfo="label+percent parent")
 fig3.update_layout(height=500, margin=dict(t=10, l=10, r=10, b=10))
-# Desativa HUD aqui também
+
 st.plotly_chart(fig3, use_container_width=True, config={'displayModeBar': False})
