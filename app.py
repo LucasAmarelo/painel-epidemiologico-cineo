@@ -225,10 +225,32 @@ with col_vivos:
 st.markdown("---")
 
 # ==========================================
-# 8. BLOCO INFERIOR 1: Top 10 Causas Básicas (NOVO)
+# 8. BLOCO INFERIOR 1: Top 10 Causas Básicas
 # ==========================================
 st.subheader("Principais Causas de Mortalidade Neonatal")
 st.caption("As 10 Causas Básicas (CID-10) mais frequentes nos óbitos registrados.")
+
+# Dicionário interno para as causas neonatais mais comuns
+dicionario_cid = {
+    "P369": "Sepse bacteriana do recém-nascido, não especificada",
+    "P220": "Síndrome do desconforto respiratório do recém-nascido",
+    "P072": "Imaturidade extrema",
+    "P219": "Asfixia ao nascer, não especificada",
+    "P229": "Desconforto respiratório do recém-nascido, não especificado",
+    "P209": "Hipóxia intra-uterina não especificada",
+    "P073": "Outros recém-nascidos pré-termo",
+    "P290": "Insuficiência cardíaca neonatal",
+    "P77" : "Enterocolite necrotizante do feto e do recém-nascido",
+    "P524": "Hemorragia ventricular do recém-nascido",
+    "P368": "Outras sepses bacterianas do recém-nascido",
+    "P362": "Sepse do recém-nascido devida a Staphylococcus aureus",
+    "P240": "Aspiração neonatal de mecônio",
+    "Q249": "Malformação congênita do coração, não especificada",
+    "A500": "Sífilis congênita precoce sintomática",
+    "A509": "Sífilis congênita, não especificada",
+    "P012": "Feto/RN afetado por oligoidrâmnio",
+    "P285": "Falência respiratória do recém-nascido"
+}
 
 df_cid = df_filtrado[(df_filtrado['OBITO_PRECOCE'] == 1) & (df_filtrado['CAUSABAS'].notna())].copy()
 df_cid['CAUSABAS'] = df_cid['CAUSABAS'].fillna('Não Informada')
@@ -236,36 +258,6 @@ df_cid['CAUSABAS'] = df_cid['CAUSABAS'].fillna('Não Informada')
 # Agrupa, conta e pega os 10 maiores
 top10_causas = df_cid['CAUSABAS'].value_counts().reset_index().head(10)
 top10_causas.columns = ['Causa Básica', 'Óbitos']
-# Inverte a ordem para o maior valor ficar no topo do gráfico horizontal
-top10_causas = top10_causas.sort_values(by='Óbitos', ascending=True)
 
-fig_top10 = px.bar(top10_causas, x='Óbitos', y='Causa Básica', orientation='h', text='Óbitos',
-                   color_discrete_sequence=['#E45756'])
-
-fig_top10.update_layout(
-    xaxis_title="Número de Óbitos",
-    yaxis_title="",
-    margin=dict(l=10, r=30, t=10, b=10),
-    height=450,
-    uniformtext_minsize=12,
-    uniformtext_mode='show'
-)
-fig_top10.update_traces(textposition='outside', textfont_size=14)
-
-st.plotly_chart(fig_top10, use_container_width=True, config={'displayModeBar': False})
-st.markdown("---")
-
-# ==========================================
-# 9. BLOCO INFERIOR 2: Cascata Fisiopatológica (Movido para o fim)
-# ==========================================
-st.subheader("Cadeia Fisiopatológica de Morte (Exploração Profunda)")
-st.caption("Para análises detalhadas: Clique nas fatias do centro (Causa Básica) para expandir as causas intermediárias e terminais.")
-
-df_cid['LINHAA'] = df_cid['LINHAA'].fillna('Sem Linha A')
-df_cid['LINHAB'] = df_cid['LINHAB'].fillna('Sem Linha B')
-
-fig3 = px.sunburst(df_cid, path=['CAUSABAS', 'LINHAA', 'LINHAB'], color='CAUSABAS')
-fig3.update_traces(textinfo="label+percent parent")
-fig3.update_layout(height=500, margin=dict(t=10, l=10, r=10, b=10))
-
-st.plotly_chart(fig3, use_container_width=True, config={'displayModeBar': False})
+# Mapeia os códigos usando o dicionário
+top1
